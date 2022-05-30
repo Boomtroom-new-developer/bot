@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-import dotenv
 from discord.utils import get
 import youtube_dl
 import asyncio
