@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import dotenv
 from discord.utils import get
 import youtube_dl
 import asyncio
@@ -12,7 +13,7 @@ import itertools
 user = {'BoomTroom#5895'}
 
 prefix = "$"
-bot = commands.Bot(command_prefix=prefix, help_command=None)
+bot = commands.Bot(command_prefix=prefix, help_command=None, )
 
 youtube_dl.utils.bug_reports_message = lambda: ''
 
@@ -163,15 +164,12 @@ class MusicPlayer:
 @bot.event
 async def on_ready():
     print(f"Success logged in as {bot.user}")
+    # beutyful ui logged in as
+    await bot.change_presence(activity=discord.Game(name="with my friends"))
 
 @bot.command()
 async def send(ctx, *, arg):
     await ctx.channel.send(f"{arg}")
-
-@bot.command()
-async def logout(ctx):
-    if ctx.author == 'BoomTroom#5895':
-        bot.logout()
 
 @bot.command()
 async def play(ctx, search: str):
@@ -351,6 +349,7 @@ async def resume(ctx):
 
     voice_client.resume()
 
+
 @bot.command()
 async def skip(ctx):
     voice_client = get(bot.voice_clients, guild=ctx.guild)
@@ -417,22 +416,38 @@ async def nowPlaying(ctx):
     embed.set_footer(text=f'Requested by {player.current["requester"]}',icon_url=player.current["requester_avatar"])
     await ctx.send(embed=embed)
 
-@bot.command()
-async def delete(ctx, amount: int):
-    await ctx.channel.purge(limit=amount)
 
-@bot.command()
-async def kick(ctx, member: discord.Member, *, reason=None):
-    await member.kick(reason=reason)
-    await ctx.send(f'**`{ctx.author}`**: Kicked **{member}**')
 
+# ban command admin only
 @bot.command()
+@commands.has_permissions(administrator=True)
 async def ban(ctx, member: discord.Member, *, reason=None):
     await member.ban(reason=reason)
     await ctx.send(f'**`{ctx.author}`**: Banned **{member}**')
 
+# kick command admin only
 @bot.command()
-async def unban(ctx, *, member):
+@commands.has_permissions(administrator=True)
+async def kick(ctx, member: discord.Member, *, reason=None):
+    await member.kick(reason=reason)
+    await ctx.send(f'**`{ctx.author}`**: Kicked **{member}**')
+
+# delete command admin only
+@bot.command()
+@commands.has_permissions(administrator=True)
+async def delete(ctx, amount: int):
+    if amount > 0:
+        await ctx.channel.purge(limit=amount)
+        await ctx.send(f'**`{ctx.author}`**: Deleted **{amount}** messages')
+    elif amount <= 0:
+        await ctx.send('You must enter a number greater than 0')
+    else:
+        await ctx.send('You must enter a number')
+
+# unban command admin only
+@bot.command()
+@commands.has_permissions(administrator=True)
+async def unban(ctx, member: discord.Member):
     banned_users = await ctx.guild.bans()
     member_name, member_discriminator = member.split('#')
 
@@ -444,54 +459,78 @@ async def unban(ctx, *, member):
             await ctx.send(f'**`{ctx.author}`**: Unbanned **{user}**')
             return
 
+# unbanall command admin only
 @bot.command()
-async def mute(ctx, member: discord.Member):
-    role = get(ctx.guild.roles, name='Muted')
-    await member.add_roles(role)
-    await ctx.send(f'**`{ctx.author}`**: Muted **{member}**')
-
-@bot.command()
-async def unmute(ctx, member: discord.Member):
-    role = get(ctx.guild.roles, name='Muted')
-    await member.remove_roles(role)
-    await ctx.send(f'**`{ctx.author}`**: Unmuted **{member}**')
-
-@bot.command()
-async def kickban(ctx, member: discord.Member, *, reason=None):
-    await member.kick(reason=reason)
-    await member.ban(reason=reason)
-    await ctx.send(f'**`{ctx.author}`**: Kicked and banned **{member}**')
-
-
-@bot.command()
+@commands.has_permissions(administrator=True)
 async def unbanall(ctx, *, reason=None):
     for member in ctx.guild.members:
         await member.unban(reason=reason)
     await ctx.send(f'**`{ctx.author}`**: Unbanned everyone')
 
+# mute command admin only
 @bot.command()
-async def clear(ctx, amount: int):
-    await ctx.channel.purge(limit=amount)
+@commands.has_permissions(administrator=True)
+async def mute(ctx, member: discord.Member):
+    role = get(ctx.guild.roles, name='Muted')
+    await member.add_roles(role)
+    await ctx.send(f'**`{ctx.author}`**: Muted **{member}**')
 
+# unmut command admin only
 @bot.command()
-async def help(ctx):
-    embed = discord.Embed(title='Help', description='This is a list of all the commands you can use in this bot', color=0x00ff00)
-    embed.add_field(name='!play', value='Plays a song from youtube', inline=False)
-    embed.add_field(name='!skip', value='Skips the current song', inline=False)
-    embed.add_field(name='!queue', value='Shows the current queue', inline=False)
-    embed.add_field(name='!volume', value='Changes the volume of the music', inline=False)
-    embed.add_field(name='!nowplaying', value='Shows the current song playing', inline=False)
-    embed.add_field(name='!delete', value='Deletes the amount of messages specified', inline=False)
-    embed.add_field(name='!kick', value='Kicks the specified member', inline=False)
-    embed.add_field(name='!ban', value='Bans the specified member', inline=False)
-    embed.add_field(name='!unban', value='Unbans the specified member', inline=False)
-    embed.add_field(name='!kickban', value='Kicks and bans the specified member', inline=False)
-    embed.add_field(name='!unbanall', value='Unbans everyone', inline=False)
-    embed.add_field(name='!mute', value='Mutes the specified member', inline=False)
-    embed.add_field(name='!unmute', value='Unmutes the specified member', inline=False)
-    embed.add_field(name='!clear', value='Clears the amount of messages specified', inline=False)
-    embed.add_field(name='!help', value='Shows this message', inline=False)
+@commands.has_permissions(administrator=True)
+async def unmute(ctx, member: discord.Member):
+    role = get(ctx.guild.roles, name='Muted')
+    await member.remove_roles(role)
+    await ctx.send(f'**`{ctx.author}`**: Unmuted **{member}**')
+
+# clear command admin only
+@bot.command()
+@commands.has_permissions(administrator=True)
+async def clear(ctx, amount: int):
+    if amount > 0:
+        await ctx.channel.purge(limit=amount)
+        await ctx.send(f'**`{ctx.author}`**: Deleted **{amount}** messages')
+    elif amount <= 0:
+        await ctx.send('You must enter a number greater than 0')
+    else:
+        await ctx.send('You must enter a number')
+
+# check ping normal command
+@bot.command()
+async def ping(ctx):
+    await ctx.send(f'**`{ctx.author}`**: Pong! {round(bot.latency * 1000)}ms')
+
+# help admin command and admin can see only
+@bot.command()
+@commands.has_permissions(administrator=True)
+async def helpadmin(ctx):
+    embed = discord.Embed(title='Admin Commands', description='Admin commands', color=0x00ff00)
+    embed.add_field(name='ban', value='ban a user', inline=False)
+    embed.add_field(name='kick', value='kick a user', inline=False)
+    embed.add_field(name='delete', value='delete a number of messages', inline=False)
+    embed.add_field(name='unban', value='unban a user', inline=False)
+    embed.add_field(name='unbanall', value='unban all users', inline=False)
+    embed.add_field(name='mute', value='mute a user', inline=False)
+    embed.add_field(name='unmute', value='unmute a user', inline=False)
+    embed.add_field(name='clear', value='clear a number of messages', inline=False)
     await ctx.send(embed=embed)
 
-bot.run("OTY4MTM3NjUwNzE4NTMxNjQ0.Gi1q_f.dAWnZ6IWzzMcG4UyVJIZIJJRm8wUoQSNmyX3wE")
+# help normal command
+@bot.command()
+async def help(ctx):
+    embed = discord.Embed(title='Commands', description='Normal commands', color=0x00ff00)
+    embed.add_field(name='play', value='play a song', inline=False)
+    embed.add_field(name='pause', value='pause the music', inline=False)
+    embed.add_field(name='resume', value='resume the music', inline=False)
+    embed.add_field(name='skip', value='skip the current song', inline=False)
+    embed.add_field(name='volume', value='set the volume', inline=False)
+    embed.add_field(name='nowPlaying', value='see what song is playing', inline=False)
+    embed.add_field(name='ping', value='check the ping', inline=False)
+    embed.add_field(name='help', value='see all the commands', inline=False)
+    embed.add_field(name='helpadmin', value='see all the admin commands', inline=False)
+    await ctx.send(embed=embed)
+
+
+
+bot.run(OTY4MTM3NjUwNzE4NTMxNjQ0.Gi1q_f.dAWnZ6IWzzMcG4UyVJIZIJJRm8wUoQSNmyX3wE)
 
