@@ -531,5 +531,5 @@ async def help(ctx):
 
 
 
-bot.run(OTY4MTM3NjUwNzE4NTMxNjQ0.Gi1q_f.dAWnZ6IWzzMcG4UyVJIZIJJRm8wUoQSNmyX3wE)
+bot.run("OTY4MTM3NjUwNzE4NTMxNjQ0.Gi1q_f.dAWnZ6IWzzMcG4UyVJIZIJJRm8wUoQSNmyX3wE")
 
